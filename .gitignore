@@ -88,3 +88,5 @@ test/build/CMakeFiles/test_unordered_set.dir/DependInfo.cmake
 test/build/CMakeFiles/test_unordered_set.dir/flags.make
 test/build/CMakeFiles/test_unordered_set.dir/link.txt
 test/build/CMakeFiles/test_unordered_set.dir/progress.make
+
+python/.idea/
