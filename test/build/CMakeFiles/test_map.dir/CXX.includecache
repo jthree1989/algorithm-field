@@ -1,0 +1,20 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/repo/wy_code/open-source/algorithm-field/test/test_map.cpp
+map
+-
+string
+-
+iostream
+-
+algorithm
+-
+set
+-
+
