@@ -90,3 +90,15 @@ test/build/CMakeFiles/test_unordered_set.dir/link.txt
 test/build/CMakeFiles/test_unordered_set.dir/progress.make
 
 python/.idea/
+
+ring_buffer/.vscode/
+
+test_Eigen/.vscode/
+
+test_Eigen/build/
+
+test_OpenCV/build/
+
+test_STL/.vscode/
+
+test_STL/build/
