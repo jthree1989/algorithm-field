@@ -6,97 +6,6 @@
 #include <memory>
 
 namespace yvr{
-	template<typename T, 
-					 typename elem_type = typename T::value_type> 																
-	class ring_buffer_iterator{
-		public:
-			typedef		std::bidirectional_iterator_tag				iterator_category;    // The type defined by the C++ standard that defines what operations are valid on the iterator
-			typedef 	T 																		value_type; 					// The type of the ring buffer which iterator points to
-			typedef		T::size_type													size_type;						// The container's index type
-			typedef		T::difference_type										difference_type;			// The container's difference type
-			typedef		T::pointer														pointer;							// The type of a pointer to element
-			typedef		T::const_pointer											const_pointer;				// The type of a constant pointer to element
-			typedef		T::reference													reference;						// The type of a reference to element
-			typedef		T::const_reference										const_reference;			// The type of a constant reference to element
-			typedef		ring_buffer_iterator<T>								self_type;						// The type of the class itself
-			
-			
-			ring_buffer_iterator(value_type* buf, size_type start_pos)
-			:buf_(buf), pos_(start_pos){}
-			
-			ring_buffer_iterator(const ring_buffer_iterator& rhs)
-			:buf_(rhs.buf_),pos_(rhs.pos_){}
-			
-			elem_type& operator*(){
-				return (*buf_)[pos_];
-			}
-			
-			elem_type* operator->(){
-				return &(operator*());
-			}
-			
-			// ++iterator
-			self_type& operator++(){
-				++pos_;
-				return *this;
-			}
-			
-			// iterator++
-			self_type operator++(int){
-				self_type tmp(*this);
-				++(*this);
-				return tmp;
-			}
-			
-			// --iterator 
-			self_type& operator--(){
-				--pos_;
-				return *this;
-			}
-			
-			// iterator--
-			self_type operator--(int){
-				self_type tmp(*this);
-				--(*this);
-				return tmp;
-			}
-			
-			self_type operator+(difference_type __n){
-				self_type tmp(*this);
-				tmp.pos_ += __n;
-				return tmp;
-			}
-			
-			self_type& operator+=(difference_type __n){
-				pos_ += __n;
-				return *this;
-			}
-			
-			self_type operator-(difference_type __n){
-				self_type tmp(*this);
-				tmp.pos_ -= __n;
-				return tmp;
-			}
-			
-			self_type& operator-=(difference_type __n){
-				pos_ -= __n;
-				return *this;
-			}
-			
-			bool operator==(const self_type& rhs){
-				return (this->buf_ == rhs.buf_) && (this->pos_ == rhs.pos_); 
-			}
-			
-			bool operator!=(const self_type& rhs){
-				return !(*this == rhs);
-			}
-			
-		private:
-			value_type* buf_;
-			size_type pos_;
-	};
-
-
 	template <typename T, typename A = std::allocator<T>>
 	class ring_buffer{
 		public:
@@ -339,18 +248,75 @@ namespace yvr{
       typedef std::reverse_iterator<iterator>           reverse_iterator;
       typedef std::reverse_iterator<const_iterator>     const_reverse_iterator;
 
-      iterator begin() const{
+      iterator begin() {
         return iterator(this, 0);
       }
 
-      iterator end() const{
+      iterator end() {
         return iterator(this, size());
       }
 
-      
+      const_iterator begin() const {
+        return const_iterator(this, 0);
+      }
 
+      const_iterator end() const {
+        return const_iterator(this, size());
+      }
 
-			
+      reverse_iterator rbegin() {
+        return reverse_iterator(this->end());
+      }
+
+      reverse_iterator rend() {
+        return reverse_iterator(this->begin());
+      }
+
+      const_reverse_iterator rbegin() const{
+        return const_reverse_iterator(this->end());
+      }
+
+      const_reverse_iterator rend() const{
+        return const_reverse_iterator(this->begin());
+      }
+
+      /*
+       * size accessors
+       */
+      bool empty() const {
+        return 0 == contents_size_;
+      }
+
+      size_type capacity() const{
+        return capacity_;
+      }
+
+      size_type size() const{
+        return contents_size_;
+      }
+
+      size_type max_size() const{
+        return allocator_.max_size();
+      }
+
+      // reserve shrinks or expands the internal buffer to the size given
+      // if the buffer shrinks, keep at most the last new_size items
+      void reserve(const size_type __n){
+        if(__n != this->capacity())){
+          self_type tmp(__n);
+          const size_type offset = std::max(0, size() - __n);
+
+          tmp.assign_into(this->begin() + offset, this->end());
+          this->swap(tmp);
+        }
+      }
+
+      void resize(const size_type __n) == delete;
+
+      /*
+       * content accessors
+       */
+
 			reference front() { return array_[head_]; }
 			
 			const_reference front() const { return array_[head_]; }
@@ -359,70 +325,87 @@ namespace yvr{
 			
 			const_reference back() const { return array_[tail_]; }
 			
-			bool empty() const { return !!contents_size_; }
-			
-			size_type size() const { return contents_size_; }
-			
-			size_type capacity() const { return array_size_; }
-			
-			size_type max_size() const { return std::numeric_limits<size_type>::max(); }
-			
+      const_reference operator[](const size_type __n) const{
+        return _at_unchecked(__n);
+      }
+
+      const_reference at(const size_type __n) const{
+        return _at_checked(__n);
+      }
+
+      pointer getimpl() const{
+        return array_;
+      }
+
+      /*
+       * content modifiers
+       */
 			void clear() {
+        for(size_type i = 0; i < contents_size_； ++i){
+          allocator_.destroy(array_ + _index_to_subscript(i));
+        }
 				head_ = 1; 
 				tail_ = contents_size_ = 0; 
 			}
-			
-			void push_back(const value_type& __x){
-				increment_tail();
-				if (contents_size_ == array_size_)
-					increment_head();
-				array_[tail_] = __x;
-			}
-			
-			// TODO
-			void push_back(value_type&& __x){
-				throw std::runtime_error("Not implemented!");
-			}
-			
-			void pop_front(){
-				_increment_head(); 
-			}
-			
-			reference operator[](size_type __n){
-				return array_[__n];
-			}
-			
-			const_reference operator[](size_type __n) const{
-				return array_[__n];
-			}
-			
-			reference at(size_type __n){
-				_range_check(__n);
-				return (*this)[__n];
-			}
-			
-			const_reference at(size_type __n) const{
-				_range_check(__n);
-				return (*this)[__n];
-			}
-			
-			iterator begin() { return iterator(this, 0); }  
-			
-			iterator end() { return iterator(this, size()); }
-		
+
+      void push_back(const value_type& __v){
+        size_type next = _next_tail();
+        if(contents_size_ == capacity_){
+          // buffer is full, throw the element at head
+          array_[next] = __v;
+          _increment_head();
+        }else{
+          allocator_.construct(array_ + next, __v);
+        }
+        _increment_tail();
+      }
+
+      void pop_front(){
+        size_type destroy_pos = head_;
+        _increment_head();
+        allocator_.destroy(array_ + destroy_pos);
+      }
+
+      reference operator[](const size_type __n){
+        return _at_unchecked(__n);
+      }
+
+      reference at(const size_type __n){
+        return _at_checked(__n);
+      }
 		private:
-			void _increment_head(){
-				// precondition: !empty()
-				++head_;
-				--contents_size_;
-				if(head__ = array_size_) head_ = 0;
+      reference _at_unchecked(const size_type __n) const{
+        return array_[_index_to_subscript(__n)];
+      }
+
+      reference _at_checked(const size_type __n) const{
+        _range_check(__n);
+        return _at_unchecked(__n);
+      }
+
+      // round an unbounded to an index into m_array
+      size_type _normalize(const size_type __n) const{
+        return __n % capacity_;
+      }
+      
+      // convert external index to an array subscript
+      size_type _index_to_subscript(const size_type __n) const{
+        return _normalize(head_ + __n);
+      }
+
+      void _increment_head(){
+        --contents_size_;
+        if(++head_ == capacity_) head_ = 0;
 			}
 		
 			void _increment_tail(){
-				++tail_;
-				++contents_size_;
-				if(tail_ == array_size_) tail_ = 0;
+        ++contents_size_;
+        tail_ = _next_tail();
 			}
+
+      size_type _next_tail() const{
+        return (tail_ + 1 == capacity_) ? 0 : tail_ + 1;
+      }
 			
 			void _range_check(size_type __n) const{
 				if (__n >= this->size()){
@@ -432,6 +415,15 @@ namespace yvr{
 				  __n, this->size());
 				}
 			}
+
+      template<typename I>
+      void assign_into(I from, I to){
+        if(_contents_size > 0) clear();
+        while(from != to){
+          push_back(*from);
+          ++from;
+        }
+      }
 		
 		private:
     	size_type       capacity_;
@@ -441,4 +433,48 @@ namespace yvr{
 			size_type       tail_;
 			size_type       contents_size_;
 	};
+
+  /*
+   * Comparison operators
+   */
+  template <typename T, typename A>
+  bool operator==(const ring_buffer<T, A>& lhs, const ring_buffer<T, A>& rhs){
+    return lhs.size() == rhs.size() && std::equal(lhs.begin(), lhs.end(), rhs.begin()); 
+  }
+
+  template<typename T, typename A>
+  bool operator!=(const ring_buffer<T, A>& lhs, const ring_buffer<T, A>& rhs){
+    return !(lhs == rhs);
+  }
+
+  template<typename T, typename A>
+  bool operator<(const ring_buffer<T, A>& lhs, const ring_buffer<T, A>& rhs){
+    return std::lexicographical_compare(lhs.begin(), lhs.end(),
+                                        rhs.begin(), rhs.end());
+  }
+
+  template<typename T, typename A>
+  typename ring_buffer<T, A>::iterator
+  begin(ring_buffer<T, A>& rb){
+    return rb.begin();
+  }
+
+  template<typename T, typename A>
+  typename ring_buffer<T, A>::iterator
+  end(ring_buffer<T, A>& rb){
+    return rb.end();
+  }
+
+  template<typename T, typename A>
+  typename ring_buffer<T, A>::const_iterator
+  begin(ring_buffer<const T, A>& rb){
+    return rb.begin();
+  }
+
+  template<typename T, typename A>
+  typename ring_buffer<T, A>::const_iterator
+  end(ring_buffer<const T, A>& rb){
+    return rb.end();
+  }      
+
 }
