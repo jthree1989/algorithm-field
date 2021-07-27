@@ -31,4 +31,6 @@ public:
 int main(int argc, char** argv)
 {
     cout << argv[0] << endl;
+    std::vector<int> a, b;
+    std::cout << std::boolalpha << (a.begin()!= b.begin()) << std::endl;
 }

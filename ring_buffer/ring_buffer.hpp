@@ -250,16 +250,104 @@ namespace yvr{
           /*
            * iterator modifier
            */
-            
+          // ++iterator
+          self_type& operator++(){
+            pos_ += 1;
+            return *this;
+          }
 
-          
+          // iterator++
+          self_type operator++(int){
+            self_type tmp(*this);
+            ++(*this);
+            return tmp;
+          }
+
+          // --iterator
+          self_type& operator--(){
+            pos_ -= 1;
+            return *this;
+          }
+
+          // iterator--
+          self_type operator--(int){
+            self_type tmp(*this);
+            --(*this);
+            return tmp;
+          }
+
+          self_type operator+(const difference_type& __n) const{
+            self_type tmp(*this);
+            tmp.pos_ += __n;
+            return tmp;
+          }
+
+          self_type& operator+=(const difference_type& __n){
+            pos_ += __n;
+            return *this;
+          }
+
+          self_type operator-(const difference_type& __n) const{
+            self_type tmp(*this);
+            tmp.pos_ -= __n;
+            return *this;
+          }
+
+          self_type& operator-=(const difference_type& __n){
+            pos_ -= __n;
+            return *this;
+          }
+
+          difference_type operator-(const self_type& __c){
+            return this->pos_ - __c.pos_;
+          }
+
+          bool operator==(const self_type& __c) const{
+            return (this->pos_ == __c.pos_) && (this->buf_ == __c.buf_);
+          }
+
+          bool operator!=(const self_type& __c) const{
+            return (this->pos_ != __c.pos_) || (this->buf_ != __c.buf_));
+          }
+
+          bool operator>(const self_type& __c) const{
+            return this->pos_ > __c.pos_;
+          }
+
+          bool operator>=(const self_type& __c) const{
+            return this->pos_ >= __c.pos_;
+          }
+
+          bool operator<(const self_type& __c) const{
+            return this->pos_ < __c.pos_;
+          }
+
+          bool operator<=(const self_type& __c) const{
+            return this->pos_ <= __c.pos_;
+          }            
         private:
           ring_buffer_type* buf_;
           size_type pos_;          
+      };
+
+      /*
+       * iterator
+       */
+      
+      typedef iterator_<value_type, value_type>         iterator;
+      typedef iterator_<const value_type, value_type>   const_iterator;
+      typedef std::reverse_iterator<iterator>           reverse_iterator;
+      typedef std::reverse_iterator<const_iterator>     const_reverse_iterator;
+
+      iterator begin() const{
+        return iterator(this, 0);
       }
 
+      iterator end() const{
+        return iterator(this, size());
+      }
 
-
+      
 
 
 			

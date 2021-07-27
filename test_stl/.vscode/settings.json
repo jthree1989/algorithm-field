@@ -1,0 +1,24 @@
+{
+  "files.associations": {
+    "*.md": "markdown",
+    "array": "c",
+    "atomic": "c",
+    "*.tcc": "c",
+    "deque": "c",
+    "forward_list": "c",
+    "list": "c",
+    "string": "c",
+    "vector": "c",
+    "iterator": "c",
+    "memory": "c",
+    "memory_resource": "c",
+    "string_view": "c",
+    "functional": "c",
+    "istream": "c",
+    "ostream": "c",
+    "streambuf": "c",
+    "type_traits": "c",
+    "typeinfo": "c",
+    "tuple": "c"
+  }
+}
