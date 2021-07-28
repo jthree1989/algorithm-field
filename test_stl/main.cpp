@@ -26,11 +26,18 @@ public:
 
         return merged;
     }
+
+    void foo() = delete;
 };
+
+// void Solution::foo(){
+  
+// }
 
 int main(int argc, char** argv)
 {
     cout << argv[0] << endl;
-    std::vector<int> a, b;
+    std::vector<int> a(10), b;
     std::cout << std::boolalpha << (a.begin()!= b.begin()) << std::endl;
+    std::cout << a.back() << std::endl;
 }

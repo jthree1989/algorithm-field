@@ -19,7 +19,6 @@ namespace yvr{
 			typedef	typename allocator_type::const_reference  const_reference;			// A constant reference to element type
 			typedef	typename allocator_type::size_type				size_type;						// The type used to index into the container
 			typedef	typename allocator_type::difference_type	difference_type;			// The type of the result of subtracting two container iterators
-			typedef	ring_buffer_iterator<self_type>				    iterator;							// The type of iterator
 			 
 							
 			 /*
@@ -46,7 +45,7 @@ namespace yvr{
       ring_buffer(const ring_buffer& other)
       :capacity_(other.capacity_),
        allocator_(other.allocator_),
-       array_(alloctaor_.allocate(capacity_)),
+       array_(allocator_.allocate(capacity_)),
        head_(other.head_),
        tail_(other.tail_),
        contents_size_(other.contents_size_){
@@ -105,9 +104,9 @@ namespace yvr{
       template <typename E, typename EN>
       class iterator_ : public std::iterator<std::random_access_iterator_tag, EN>{
         public:
-          typedef E                                           element_type;
+          typedef E                                           elem_type;
           // non-const element type
-          typedef EN                                          element_type_nc;
+          typedef EN                                          elem_type_nc;
           typedef ring_buffer<T, A>                           ring_buffer_type;
           typedef typename ring_buffer_type::difference_type  difference_type;
 
@@ -216,7 +215,7 @@ namespace yvr{
           }
 
           bool operator!=(const self_type& __c) const{
-            return (this->pos_ != __c.pos_) || (this->buf_ != __c.buf_));
+            return (this->pos_ != __c.pos_) || (this->buf_ != __c.buf_);
           }
 
           bool operator>(const self_type& __c) const{
@@ -302,7 +301,7 @@ namespace yvr{
       // reserve shrinks or expands the internal buffer to the size given
       // if the buffer shrinks, keep at most the last new_size items
       void reserve(const size_type __n){
-        if(__n != this->capacity())){
+        if(__n != this->capacity()){
           self_type tmp(__n);
           const size_type offset = std::max(0, size() - __n);
 
@@ -311,7 +310,7 @@ namespace yvr{
         }
       }
 
-      void resize(const size_type __n) == delete;
+      void resize(const size_type __n) = delete;
 
       /*
        * content accessors
@@ -321,7 +320,9 @@ namespace yvr{
 			
 			const_reference front() const { return array_[head_]; }
 			
-			reference back() { return array_[tail_]; }
+			reference back() { 
+        return array_[tail_]; 
+      }
 			
 			const_reference back() const { return array_[tail_]; }
 			
@@ -341,7 +342,7 @@ namespace yvr{
        * content modifiers
        */
 			void clear() {
-        for(size_type i = 0; i < contents_size_； ++i){
+        for(size_type i = 0; i < contents_size_; ++i){
           allocator_.destroy(array_ + _index_to_subscript(i));
         }
 				head_ = 1; 
@@ -418,7 +419,7 @@ namespace yvr{
 
       template<typename I>
       void assign_into(I from, I to){
-        if(_contents_size > 0) clear();
+        if(contents_size_ > 0) clear();
         while(from != to){
           push_back(*from);
           ++from;
