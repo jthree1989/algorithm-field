@@ -104,3 +104,5 @@ test_STL/.vscode/
 test_STL/build/
 
 ring_buffer/build/
+
+test_opencv/.vscode/
