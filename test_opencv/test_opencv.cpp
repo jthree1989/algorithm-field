@@ -41,10 +41,10 @@ TEST_CASE("Fisheye stereo calibration", "[calib3d]"){
   }
 }
 
-TEST_CASE("Use regex parse string", "[regex]"){
+TEST_CASE("Use regex parse string", "[.regex]"){
   std::string test_string("/repo/wy_code/open-source/algorithm-field/test_opencv/data/stereo_fisheye_imgs/right7.jpg");
   std::string simple_string("helloworlD/");
-  std::regex pattern("[a-z\/]*");
+  std::regex pattern("[a-z/]*");
 
   if(std::regex_match(simple_string, pattern)){
     SPDLOG_INFO("Matched: {}", simple_string);
@@ -52,10 +52,10 @@ TEST_CASE("Use regex parse string", "[regex]"){
     SPDLOG_INFO("Unmatched: {}", simple_string);
   }
 
-  pattern = "([a-zA-Z_\/-]+)\/([a-zA-Z]{4,5})([1-9]{1,2}).([a-zA-Z]+)";
+  pattern = "([a-zA-Z_/-]+)/([a-zA-Z]{4,5})([1-9]{1,2}).([a-zA-Z]+)";
   std::smatch match;
 
   std::regex_search(test_string, match, pattern);
-  SPDLOG_INFO("{} {} {} {}", match[0], match[1], match[2], match[3]);
+  SPDLOG_INFO("regex_search results:\n{}\n{}\n{}\n{}", match[0], match[1], match[2], match[3]);
 
 }
