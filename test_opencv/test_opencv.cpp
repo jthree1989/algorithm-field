@@ -7,10 +7,54 @@ namespace fs = std::filesystem;
 #include <set>
 #include <regex>
 #include <sstream>
+#include <vector>
 
 #include <opencv2/core.hpp>
 #include <opencv2/calib3d.hpp>
 #include <opencv2/highgui.hpp>
+
+bool LoadImageList(const std::string& path, std::vector<std::vector<std::string>>& filename_list){
+  // 1. Extract and class the filename into "left" and "right"
+  std::map<size_t, std::string> left_img_paths, right_img_paths;
+  std::string img_type;
+  // 1.1 use regex to parse path
+  std::regex pattern("([a-zA-Z_/-]+)/([a-zA-Z]{4,5})([0-9]{1,2}).([a-zA-Z]+)");
+  std::smatch match;
+
+  for (const fs::directory_entry &image_path : fs::directory_iterator(path)){
+    std::string path_str = image_path.path().string();
+    std::regex_search(path_str, match, pattern);
+    if(img_type.empty())
+      img_type = match[4];
+    else if(img_type != match[4]){
+      SPDLOG_CRITICAL("Images have diffrent type.");
+      return false;
+    }else{
+      // 
+    }
+
+    std::string stereo_type(match[2]);
+    std::stringstream ss(match[3]);
+    size_t index;
+    ss >> index;
+
+    if (stereo_type == "left")
+      left_img_paths[index] = path_str;
+    else
+      right_img_paths[index] = path_str;
+  }
+  // 2. Fill the list by order
+  for(const auto& left_img_path : left_img_paths){
+    filename_list[0].emplace_back(left_img_path.second);
+  }
+
+  for (const auto& right_img_path : right_img_paths){
+    filename_list[1].emplace_back(right_img_path.second);
+  }
+
+  return true;
+
+}
 
 TEST_CASE("Mat", "[core][.]"){
 	SECTION("Mat Constructor") {
@@ -23,51 +67,73 @@ TEST_CASE("Mat", "[core][.]"){
 }
 
 TEST_CASE("Fisheye stereo calibration", "[calib3d]"){
-  SECTION("Read and load images"){
-    fs::path current_path = fs::current_path();
-    SPDLOG_INFO("Current path: {}", current_path);
-
-    fs::path data_path = current_path.parent_path().parent_path() / "data"; 
-    SPDLOG_INFO("Data path: {}", data_path);
-
-    fs::path stereo_imgs_path = data_path / "stereo_fisheye_imgs";
-    SPDLOG_INFO("Stereo images path: {}", stereo_imgs_path);
-
-    std::map<size_t, std::string> left_img_paths, right_img_paths;
-    std::string img_type;
-    // Put all image file path into container and order them by number
-    std::regex pattern("([a-zA-Z_/-]+)/([a-zA-Z]{4,5})([0-9]{1,2}).([a-zA-Z]+)");
-    std::smatch match;
-    for(const fs::directory_entry& image_path : fs::directory_iterator(stereo_imgs_path)){
-      std::string path_str = image_path.path().string();
-      std::regex_search(path_str, match, pattern);
-      img_type = match[4];
-      std::string stereo_type(match[2]);
-      std::stringstream ss(match[3]);
-      size_t index;
-      ss >> index;
-
-      if(stereo_type == "left")
-        left_img_paths[index] = path_str;
-      else
-        right_img_paths[index] = path_str;
-    }
-
-    for(auto left_img_path : left_img_paths){
-      SPDLOG_INFO("{} : {}", left_img_path.first, left_img_path.second);
-      cv::Mat img = cv::imread(left_img_path.second);
-      cv::imshow("left", img);
-      cv::waitKey(100);
-    }
-    for(auto right_img_path : right_img_paths){
-      SPDLOG_INFO("{} : {}", right_img_path.first, right_img_path.second);
-      cv::Mat img = cv::imread(right_img_path.second);
-      cv::imshow("right", img);
-      cv::waitKey(100);
-    }
-  }
   SECTION("fisheye::stereoRectify"){
+    // 1. Load file name of stereo images
+    std::vector<std::vector<std::string>> stereo_image_list;
+    stereo_image_list.resize(2);     //^ Store left and right image paths each
+    std::string image_path = fs::current_path().parent_path().parent_path() / "data" / "stereo_fisheye_imgs";
+    SPDLOG_INFO("image_path : {}", image_path);
+    bool load = LoadImageList(image_path, stereo_image_list);
+    if(load){
+      SPDLOG_INFO("Load stereo image path as follow:");
+      for(size_t cam_id = 0; cam_id < stereo_image_list.size(); ++cam_id){
+        for(const std::string& image_path : stereo_image_list[cam_id]){
+          SPDLOG_INFO("{}", image_path);
+        }
+      }
+    }else{
+      SPDLOG_ERROR("Fail to load stereo image path!");
+    }
+    // 2. Calibrate stereo images
+    // 3. Rectify stereo images
+  }
+}
 
+TEST_CASE("Read and load images", "[.io]")
+{
+  fs::path current_path = fs::current_path();
+  SPDLOG_INFO("Current path: {}", current_path);
+
+  fs::path data_path = current_path.parent_path().parent_path() / "data";
+  SPDLOG_INFO("Data path: {}", data_path);
+
+  fs::path stereo_imgs_path = data_path / "stereo_fisheye_imgs";
+  SPDLOG_INFO("Stereo images path: {}", stereo_imgs_path);
+
+  std::map<size_t, std::string> left_img_paths, right_img_paths;
+  std::string img_type;
+  // Put all image file path into container and order them by number
+  std::regex pattern("([a-zA-Z_/-]+)/([a-zA-Z]{4,5})([0-9]{1,2}).([a-zA-Z]+)");
+  std::smatch match;
+  for (const fs::directory_entry &image_path : fs::directory_iterator(stereo_imgs_path))
+  {
+    std::string path_str = image_path.path().string();
+    std::regex_search(path_str, match, pattern);
+    img_type = match[4];
+    std::string stereo_type(match[2]);
+    std::stringstream ss(match[3]);
+    size_t index;
+    ss >> index;
+
+    if (stereo_type == "left")
+      left_img_paths[index] = path_str;
+    else
+      right_img_paths[index] = path_str;
+  }
+
+  for (auto left_img_path : left_img_paths)
+  {
+    SPDLOG_INFO("{} : {}", left_img_path.first, left_img_path.second);
+    cv::Mat img = cv::imread(left_img_path.second);
+    cv::imshow("left", img);
+    cv::waitKey(100);
+  }
+  for (auto right_img_path : right_img_paths)
+  {
+    SPDLOG_INFO("{} : {}", right_img_path.first, right_img_path.second);
+    cv::Mat img = cv::imread(right_img_path.second);
+    cv::imshow("right", img);
+    cv::waitKey(100);
   }
 }
 
