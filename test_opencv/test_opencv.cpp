@@ -36,7 +36,7 @@ TEST_CASE("Fisheye stereo calibration", "[calib3d]"){
     std::map<size_t, std::string> left_img_paths, right_img_paths;
     std::string img_type;
     // Put all image file path into container and order them by number
-    std::regex pattern("([a-zA-Z_/-]+)/([a-zA-Z]{4,5})([1-9]{1,2}).([a-zA-Z]+)");
+    std::regex pattern("([a-zA-Z_/-]+)/([a-zA-Z]{4,5})([0-9]{1,2}).([a-zA-Z]+)");
     std::smatch match;
     for(const fs::directory_entry& image_path : fs::directory_iterator(stereo_imgs_path)){
       std::string path_str = image_path.path().string();
