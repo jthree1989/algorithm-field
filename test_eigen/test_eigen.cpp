@@ -3,6 +3,7 @@
 #include <spdlog/fmt/ostr.h> // NOTE Include this header for log Eigen matrix
 
 #include <Eigen/Core>
+#include <Eigen/Geometry>
 
 TEST_CASE("Matrix", "[Core]"){
 	SECTION("Matrix Constructor") {
@@ -28,4 +29,12 @@ TEST_CASE("Matrix multi", "[Core]"){
   Eigen::Matrix3d z_1 = x * y;
 
   SPDLOG_INFO("x:\n{}, \ny:\n{}, \nz:\n{}, \nz_1:\n{}", x, y, z, z_1); 
+}
+
+TEST_CASE("Quaternion Slerp", "[Geometry]"){
+  Eigen::Quaterniond q1 = Eigen::Quaterniond::UnitRandom();
+  Eigen::Quaterniond q2;
+  q2.coeffs() = -q1.coeffs();
+
+  
 }
