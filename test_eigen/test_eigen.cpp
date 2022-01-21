@@ -11,6 +11,8 @@
 #include <Eigen/Geometry>
 #include <Eigen/Eigenvalues>
 
+using namespace Eigen;
+
 TEST_CASE("Matrix", "[Core][.]") {
   Eigen::Matrix<float, 3, 3> default_matrix;
 
@@ -51,7 +53,7 @@ TEST_CASE("SelfAdjointEigenSolver", "[Matrix][.]") {
   SPDLOG_INFO("Eigen values:\n {}", eigen_vals);
 }
 
-TEST_CASE("Alias", "[Matrix]") {
+TEST_CASE("Alias", "[Matrix][.]") {
   Eigen::Matrix3d a;
   a << 1, 2, 3, 4, 5, 6, 7, 8, 9;
   SPDLOG_INFO("Here is the matrix a:\n{}", a);
@@ -87,4 +89,47 @@ TEST_CASE("Givens Rotation", "[Jacobi][.]") {
   SPDLOG_INFO("vec_2d_givens: {}", vec_2d_givens);
   vec_2d.applyOnTheLeft(0, 1, jacobi_rotation.adjoint());
   SPDLOG_INFO("vec_2d: {}", vec_2d);
+}
+
+TEST_CASE("Basic linear solving", "[Linear algebra and decompositions]") {
+  // change log pattern
+  spdlog::set_pattern("%v");
+
+  Matrix3f A;
+  Vector3f b;
+  // clang-format off
+  A << 1, 2, 3, 
+       4, 5, 6, 
+       7, 8, 9;
+  b << 3, 3, 4;
+  // clang-format on
+  SPDLOG_INFO("A:\n{}", A);
+  SPDLOG_INFO("b:{}", b.transpose());
+
+  Vector3f x = A.colPivHouseholderQr().solve(b);
+
+  SPDLOG_INFO("x:{}", x.transpose());
+
+  ColPivHouseholderQR<Matrix3f> qr_solver(A);
+  x = qr_solver.solve(b);
+
+  SPDLOG_INFO("x:{}", x.transpose());
+
+  Matrix3i P = qr_solver.colsPermutation().toDenseMatrix();
+  SPDLOG_INFO("P:\n{}", P);
+
+  Matrix3f q = qr_solver.householderQ();
+  SPDLOG_INFO("q:\n{}", q);
+  MatrixXf thinQ(A.rows(), A.cols());
+  thinQ.setIdentity();
+  Matrix3f Q = q * thinQ;
+  SPDLOG_INFO("Q:\n{}", Q);
+
+  Matrix3f R = qr_solver.matrixR().template triangularView<Upper>();
+  SPDLOG_INFO("R:\n{}", R);
+
+  Matrix3f AP = A * P.cast<float>();
+  Matrix3f QR = Q * R;
+  SPDLOG_INFO("AP:\n{}", AP);
+  SPDLOG_INFO("QR:\n{}", QR);
 }
