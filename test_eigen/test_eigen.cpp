@@ -95,41 +95,60 @@ TEST_CASE("Basic linear solving", "[Linear algebra and decompositions]") {
   // change log pattern
   spdlog::set_pattern("%v");
 
-  Matrix3f A;
-  Vector3f b;
+  Matrix<float, 4, 3> A;
+  Vector4f b;
   // clang-format off
-  A << 1, 2, 3, 
-       4, 5, 6, 
-       7, 8, 9;
-  b << 3, 3, 4;
+  A << 1, 2, 4, 
+       1, 2, 5, 
+       1, 2, 6,
+       1, 2, 7;
+  b << 3, 3, 4, 4;
   // clang-format on
   SPDLOG_INFO("A:\n{}", A);
   SPDLOG_INFO("b:{}", b.transpose());
 
-  Vector3f x = A.colPivHouseholderQr().solve(b);
+  SECTION("ColPivHouseholderQR") {
+    //^ 1. solve Ax = b using QR decompositions
+    Vector3f x = A.colPivHouseholderQr().solve(b);
+    SPDLOG_INFO("x:{}", x.transpose());
 
-  SPDLOG_INFO("x:{}", x.transpose());
-
-  ColPivHouseholderQR<Matrix3f> qr_solver(A);
-  x = qr_solver.solve(b);
-
-  SPDLOG_INFO("x:{}", x.transpose());
-
-  Matrix3i P = qr_solver.colsPermutation().toDenseMatrix();
-  SPDLOG_INFO("P:\n{}", P);
-
-  Matrix3f q = qr_solver.householderQ();
-  SPDLOG_INFO("q:\n{}", q);
-  MatrixXf thinQ(A.rows(), A.cols());
-  thinQ.setIdentity();
-  Matrix3f Q = q * thinQ;
-  SPDLOG_INFO("Q:\n{}", Q);
-
-  Matrix3f R = qr_solver.matrixR().template triangularView<Upper>();
-  SPDLOG_INFO("R:\n{}", R);
-
-  Matrix3f AP = A * P.cast<float>();
-  Matrix3f QR = Q * R;
-  SPDLOG_INFO("AP:\n{}", AP);
-  SPDLOG_INFO("QR:\n{}", QR);
+    ColPivHouseholderQR<MatrixXf> qr_solver(A);
+    x = qr_solver.solve(b);
+    SPDLOG_INFO("x:{}", x.transpose());
+    //^ 2. get AP = QR from QR decompositions
+    //^ 2.1 get column permutation matrix P
+    MatrixXi P = qr_solver.colsPermutation().toDenseMatrix();
+    SPDLOG_INFO("P:\n{}", P);
+    //^ 2.2 get unitary matrix Q
+    MatrixXf Q_1 = qr_solver.householderQ();
+    SPDLOG_INFO("Q_1:\n{}", Q_1);
+    // as rank of A is 2, so last 2 columns of Q can be random
+    Q_1.block<4, 1>(0, 2) = Vector4f::Random();
+    Q_1.block<4, 1>(0, 3) = Vector4f::Random();
+    SPDLOG_INFO("Q_1:\n{}", Q_1);
+    MatrixXf Q_2 = qr_solver.householderQ().setLength(qr_solver.nonzeroPivots());
+    SPDLOG_INFO("Q_2:\n{}", Q_2);
+    //^ 2.3 get right hand matrix R
+    MatrixXf R = qr_solver.matrixR().template triangularView<Upper>();
+    SPDLOG_INFO("R:\n{}", R);
+    //^ 2.4 check AP == QR
+    MatrixXf AP = A * P.cast<float>();
+    MatrixXf QR_1 = Q_1 * R;
+    SPDLOG_INFO("AP:\n{}", AP);
+    SPDLOG_INFO("QR:\n{}", QR_1);
+    CHECK(AP.isApprox(QR_1));
+  }
+  SECTION("ColPivHouseholderQR::compute()") {
+    Matrix4f random_matrix = Matrix4f::Random();
+    ColPivHouseholderQR<Matrix4f> random_qr(4, 4);
+    random_qr.compute(random_matrix);
+    Matrix4i random_P = random_qr.colsPermutation().toDenseMatrix();
+    Matrix4f random_Q = random_qr.householderQ();
+    Matrix4f random_R = random_qr.matrixR().template triangularView<Upper>();
+    Matrix4f random_AP = random_matrix * random_P.cast<float>();
+    Matrix4f random_QR = random_Q * random_R;
+    SPDLOG_INFO("random_AP:\n{}", random_AP);
+    SPDLOG_INFO("randim_QR:\n{}", random_QR);
+    CHECK(random_AP.isApprox(random_QR));
+  }
 }
