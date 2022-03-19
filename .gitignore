@@ -106,5 +106,3 @@ test_STL/build/
 ring_buffer/build/
 
 test_opencv/.vscode/
-
-test_stl/
